@@ -1,0 +1,15 @@
+<t:container xmlns:t="http://tapestry.apache.org/schema/tapestry_5_4.xsd"
+	xmlns:p="tapestry:parameter">
+	<noscript class="js-required">
+		${message:javascript_required}
+	</noscript>
+	<div class="input-append">
+		<input t:type="TextField" class="${txtFieldClass}" t:id="entry"
+			minChars="prop:minChars" t:mixins="Autocomplete" placeholder="${placeholder}" />
+		<t:if test="btnSearch">
+			<button type="submit" class="btn">
+				<i class="icon-search"></i>
+			</button>
+		</t:if>
+	</div>
+</t:container>
