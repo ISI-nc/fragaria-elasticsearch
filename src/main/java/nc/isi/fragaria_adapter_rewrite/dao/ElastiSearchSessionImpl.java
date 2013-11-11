@@ -2,8 +2,6 @@ package nc.isi.fragaria_adapter_rewrite.dao;
 
 import java.util.Collection;
 
-import nc.isi.fragaria_adapter_rewrite.dao.Query;
-import nc.isi.fragaria_adapter_rewrite.dao.SessionImpl;
 import nc.isi.fragaria_adapter_rewrite.dao.adapters.AdapterManager;
 import nc.isi.fragaria_adapter_rewrite.dao.adapters.ElasticSearchAdapter;
 import nc.isi.fragaria_adapter_rewrite.entities.Entity;
