@@ -1,6 +1,5 @@
 package nc.isi.fragaria_adapter_rewrite.dao;
 
-import nc.isi.fragaria_adapter_rewrite.dao.Query;
 import nc.isi.fragaria_adapter_rewrite.entities.Entity;
 
 import org.elasticsearch.index.query.QueryBuilder;
@@ -10,7 +9,6 @@ public class SearchQuery<T extends Entity> implements Query<T> {
 	private final QueryBuilder queryBuilder;
 	private final int limit;
 	private final int offset;
-	private final boolean hasSortOrder;
 	private ElasticSorting elasticSorting;
 
 	public SearchQuery(Class<T> resultType, QueryBuilder queryBuilder,int limit) {
@@ -18,7 +16,6 @@ public class SearchQuery<T extends Entity> implements Query<T> {
 		this.queryBuilder = queryBuilder;
 		this.limit = limit;
 		this.offset=0;
-		this.hasSortOrder = false;
 	}
 	
 	public SearchQuery(Class<T> resultType, QueryBuilder queryBuilder,int limit,int offset) {
@@ -26,7 +23,6 @@ public class SearchQuery<T extends Entity> implements Query<T> {
 		this.queryBuilder = queryBuilder;
 		this.limit = limit;
 		this.offset=offset;
-		this.hasSortOrder = false;
 	}
 	
 	public SearchQuery(Class<T> resultType, QueryBuilder queryBuilder,int limit,int offset,ElasticSorting elasticSorting) {
@@ -34,7 +30,6 @@ public class SearchQuery<T extends Entity> implements Query<T> {
 		this.queryBuilder = queryBuilder;
 		this.limit = limit;
 		this.offset=offset;
-		this.hasSortOrder = false;
 		this.setElasticSorting(elasticSorting);
 	}
 
@@ -53,10 +48,6 @@ public class SearchQuery<T extends Entity> implements Query<T> {
 
 	public int getOffset() {
 		return offset;
-	}
-
-	public boolean isHasSortOrder() {
-		return hasSortOrder;
 	}
 
 	public ElasticSorting getElasticSorting() {

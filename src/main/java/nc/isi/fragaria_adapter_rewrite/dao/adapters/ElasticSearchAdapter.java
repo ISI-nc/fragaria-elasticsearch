@@ -48,6 +48,10 @@ public class ElasticSearchAdapter {
 			this.transportClient.addTransportAddress(adress);
 	}
 
+	public TransportClient getTransportClient() {
+		return transportClient;
+	}
+
 	private <T extends Entity> Collection<T> serialize(
 			final SearchResponse searchResponse, final Class<T> entityClass) {
 
@@ -84,7 +88,7 @@ public class ElasticSearchAdapter {
 				.setFrom(searchQuery.getOffset())
 				.setSize(searchQuery.getLimit());
 
-		if (searchQuery.isHasSortOrder())
+		if (searchQuery.getElasticSorting() != null)
 			searchRequestBuilder
 					.addSort(searchQuery.getElasticSorting().getField(),
 							searchQuery.getElasticSorting().getSortOrder());

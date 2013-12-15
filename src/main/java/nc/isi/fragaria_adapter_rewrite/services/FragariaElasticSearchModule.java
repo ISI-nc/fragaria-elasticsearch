@@ -21,7 +21,7 @@ public class FragariaElasticSearchModule {
 
 	@Startup
 	public void initialize(AliasesInitializer aliasesInitializer) {
-		aliasesInitializer.initialize();
+		// aliasesInitializer.initialize();
 	}
 
 }
