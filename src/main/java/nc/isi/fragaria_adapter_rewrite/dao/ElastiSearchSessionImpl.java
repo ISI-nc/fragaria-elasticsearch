@@ -6,6 +6,7 @@ import nc.isi.fragaria_adapter_rewrite.dao.adapters.AdapterManager;
 import nc.isi.fragaria_adapter_rewrite.dao.adapters.ElasticSearchAdapter;
 import nc.isi.fragaria_adapter_rewrite.entities.Entity;
 import nc.isi.fragaria_adapter_rewrite.entities.EntityBuilder;
+import nc.isi.fragaria_adapter_rewrite.enums.Completion;
 
 public class ElastiSearchSessionImpl extends SessionImpl {
 
@@ -21,8 +22,13 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 	@Override
 	public <T extends Entity> Collection<T> get(Query<T> query, boolean cache) {
 		if (query instanceof SearchQuery) {
-			return elasticSearchAdapter.executeQuery((SearchQuery<T>) query)
-					.getResponse();
+			Collection<T> entities = elasticSearchAdapter.executeQuery(
+					(SearchQuery<T>) query).getResponse();
+			// TODO We assume that object from ES are full
+			for (T entity : entities) {
+				entity.setCompletion(Completion.FULL);
+			}
+			return entities;
 		}
 		return super.get(query, cache);
 	}
@@ -32,6 +38,9 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 		if (query instanceof SearchQuery) {
 			Collection<T> collection = elasticSearchAdapter.executeQuery(
 					(SearchQuery<T>) query).getResponse();
+			// TODO We assume that object from ES are full
+			for (T entity : collection)
+				entity.setCompletion(Completion.FULL);
 			return collection.size() == 0 ? null : collection.iterator().next();
 		}
 		return super.getUnique(query, cache);
