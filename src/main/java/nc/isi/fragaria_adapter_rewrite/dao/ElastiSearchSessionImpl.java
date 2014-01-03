@@ -24,7 +24,7 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 		if (query instanceof SearchQuery) {
 			Collection<T> entities = elasticSearchAdapter.executeQuery(
 					(SearchQuery<T>) query).getResponse();
-			// TODO We assume that object from ES are full
+			// TODO We assume that objects from ES are full
 			for (T entity : entities) {
 				entity.setCompletion(Completion.FULL);
 			}
@@ -38,7 +38,7 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 		if (query instanceof SearchQuery) {
 			Collection<T> collection = elasticSearchAdapter.executeQuery(
 					(SearchQuery<T>) query).getResponse();
-			// TODO We assume that object from ES are full
+			// TODO We assume that objects from ES are full
 			for (T entity : collection)
 				entity.setCompletion(Completion.FULL);
 			return collection.size() == 0 ? null : collection.iterator().next();
