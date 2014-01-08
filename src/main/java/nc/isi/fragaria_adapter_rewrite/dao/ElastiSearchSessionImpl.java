@@ -28,6 +28,7 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			for (T entity : entities) {
 				entity.setCompletion(Completion.FULL);
 			}
+			changeSession(entities);
 			return entities;
 		}
 		return super.get(query, cache);
@@ -41,6 +42,7 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			// TODO We assume that objects from ES are full
 			for (T entity : collection)
 				entity.setCompletion(Completion.FULL);
+			changeSession(collection);
 			return collection.size() == 0 ? null : collection.iterator().next();
 		}
 		return super.getUnique(query, cache);
