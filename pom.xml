@@ -49,6 +49,6 @@
 	</build>
 	<properties>
 		<fragaria-version>0.0.1-SNAPSHOT</fragaria-version>
-		<elasticsearch-version>0.90.0</elasticsearch-version>
+		<elasticsearch-version>1.0.0</elasticsearch-version>
 	</properties>
 </project>
