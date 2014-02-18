@@ -10,11 +10,11 @@ import nc.isi.fragaria_reflection.services.ReflectionProvider;
 
 import org.apache.log4j.Logger;
 import org.reflections.Reflections;
+
 /**
  * 
- * @author bjonathas
- *Initialize filtered aliases for entities annotated with 
- *@Elasticsearch(aliasname)
+ * @author bjonathas Initialize filtered aliases for entities annotated with
+ * @Elasticsearch(aliasname)
  */
 public class AliasesInitializer {
 	private static final Logger LOGGER = Logger
@@ -38,31 +38,37 @@ public class AliasesInitializer {
 				LOGGER.info("rejected : " + entityClass);
 				continue;
 			}
-			initializeIfEsAlias(new EntityMetadata(entityClass));	
+			initializeIfEsAlias(new EntityMetadata(entityClass));
 		}
 	}
-	
+
 	public void initializeAll() {
+		System.out.println("quoi quoi");
 		LOGGER.info("begin view initialization");
 		for (Class<? extends Entity> entityClass : reflections
 				.getSubTypesOf(AbstractEntity.class)) {
 			if (Modifier.isAbstract(entityClass.getModifiers())
 					|| entityClass.isAnonymousClass()
-					|| entityClass.isInterface()) {
+					|| entityClass.isInterface() ) {
 				LOGGER.info("rejected : " + entityClass);
 				continue;
 			}
+			System.out.println("ouai ouai le test");
+			System.out.println(entityClass);
+			System.out.println(Modifier.isAbstract(entityClass.getModifiers()));
+			System.out.println(entityClass.getModifiers());
+
 			generator.generate(new EntityMetadata(entityClass));
 		}
 	}
 
 	private void initializeIfEsAlias(EntityMetadata entityMetadata) {
 		if (entityMetadata.getEsAlias() == null) {
-			LOGGER.info("no alias found for "+entityMetadata.getEntityClass());
+			LOGGER.info("no alias found for " + entityMetadata.getEntityClass());
 		} else {
 			LOGGER.info("initialize : " + entityMetadata.getEntityClass());
 			generator.generate(entityMetadata);
 		}
-		
+
 	}
 }
