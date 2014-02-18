@@ -41,6 +41,20 @@ public class AliasesInitializer {
 			initializeIfEsAlias(new EntityMetadata(entityClass));	
 		}
 	}
+	
+	public void initializeAll() {
+		LOGGER.info("begin view initialization");
+		for (Class<? extends Entity> entityClass : reflections
+				.getSubTypesOf(AbstractEntity.class)) {
+			if (Modifier.isAbstract(entityClass.getModifiers())
+					|| entityClass.isAnonymousClass()
+					|| entityClass.isInterface()) {
+				LOGGER.info("rejected : " + entityClass);
+				continue;
+			}
+			generator.generate(new EntityMetadata(entityClass));
+		}
+	}
 
 	private void initializeIfEsAlias(EntityMetadata entityMetadata) {
 		if (entityMetadata.getEsAlias() == null) {
