@@ -43,7 +43,6 @@ public class AliasesInitializer {
 	}
 
 	public void initializeAll() {
-		System.out.println("quoi quoi");
 		LOGGER.info("begin view initialization");
 		for (Class<? extends Entity> entityClass : reflections
 				.getSubTypesOf(AbstractEntity.class)) {
@@ -53,11 +52,6 @@ public class AliasesInitializer {
 				LOGGER.info("rejected : " + entityClass);
 				continue;
 			}
-			System.out.println("ouai ouai le test");
-			System.out.println(entityClass);
-			System.out.println(Modifier.isAbstract(entityClass.getModifiers()));
-			System.out.println(entityClass.getModifiers());
-
 			generator.generate(new EntityMetadata(entityClass));
 		}
 	}

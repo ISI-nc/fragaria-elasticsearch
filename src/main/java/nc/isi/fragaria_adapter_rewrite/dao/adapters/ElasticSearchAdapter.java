@@ -54,7 +54,6 @@ public class ElasticSearchAdapter {
 
 	private <T extends Entity> Collection<T> serialize(
 			final SearchResponse searchResponse, final Class<T> entityClass) {
-
 		List<T> list = new ArrayList<T>((int) searchResponse.getHits()
 				.totalHits());
 		for (SearchHit hit : searchResponse.getHits()) {

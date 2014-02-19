@@ -9,12 +9,13 @@ import nc.isi.fragaria_adapter_rewrite.entities.EntityBuilder;
 import nc.isi.fragaria_adapter_rewrite.enums.Completion;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
 import org.elasticsearch.index.query.QueryBuilders;
 
 public class ElastiSearchSessionImpl extends SessionImpl {
 
-	private final static int DEFAULT_SIZE = 1000000000;
+	private final static int DEFAULT_SIZE = 1000000;
 
 	private final ElasticSearchAdapter elasticSearchAdapter;
 
@@ -38,34 +39,28 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			return entities;
 		} else if (query instanceof ByViewQuery
 				&& ((ByViewQuery<T>) query).getFilter().size() > 0) {
-			Collection<T> entities = null;
 			BoolQueryBuilder esQuery = QueryBuilders.boolQuery();
 			for (String prop : ((ByViewQuery<T>) query).getFilter().keySet()) {
 				Object value = ((ByViewQuery<T>) query).getFilter().get(prop);
+				MatchQueryBuilder propQuery = null;
 				if (value != null) {
 					if (value instanceof Entity) {
-						esQuery.must(QueryBuilders.matchQuery(prop + "._id",
-								((Entity) value).getId())
-								.operator(Operator.AND));
+						propQuery = QueryBuilders.matchQuery(prop + "._id",
+								((Entity) value).getId());
 					} else if (value instanceof Enum) {
-						esQuery.must(QueryBuilders.matchQuery(prop,
-								((Enum) value).name()).operator(Operator.AND));
-
+						propQuery = QueryBuilders.matchQuery(prop,
+								((Enum) value).name());
 					} else
-						esQuery.must(QueryBuilders.matchQuery(prop, value)
-								.operator(Operator.AND));
+						propQuery = QueryBuilders.matchQuery(prop, value);
 				} else {
-					esQuery.must(QueryBuilders.matchQuery(prop, value)
-							.operator(Operator.AND));
+					propQuery = QueryBuilders.matchQuery(prop, value);
 				}
+				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1)
+					propQuery.operator(Operator.AND);
+				esQuery.must(propQuery);
 			}
-			entities = get(new SearchQuery<>(query.getResultType(), esQuery,
+			return get(new SearchQuery<>(query.getResultType(), esQuery,
 					DEFAULT_SIZE), false);
-			for (T entity : entities) {
-				entity.setCompletion(Completion.FULL);
-			}
-			changeSession(entities);
-			return entities;
 		}
 		return super.get(query, cache);
 	}
@@ -80,6 +75,30 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 				entity.setCompletion(Completion.FULL);
 			changeSession(collection);
 			return collection.size() == 0 ? null : collection.iterator().next();
+		} else if (query instanceof ByViewQuery
+				&& ((ByViewQuery<T>) query).getFilter().size() > 0) {
+			BoolQueryBuilder esQuery = QueryBuilders.boolQuery();
+			for (String prop : ((ByViewQuery<T>) query).getFilter().keySet()) {
+				Object value = ((ByViewQuery<T>) query).getFilter().get(prop);
+				MatchQueryBuilder propQuery = null;
+				if (value != null) {
+					if (value instanceof Entity) {
+						propQuery = QueryBuilders.matchQuery(prop + "._id",
+								((Entity) value).getId());
+					} else if (value instanceof Enum) {
+						propQuery = QueryBuilders.matchQuery(prop,
+								((Enum) value).name());
+					} else
+						propQuery = QueryBuilders.matchQuery(prop, value);
+				} else {
+					propQuery = QueryBuilders.matchQuery(prop, value);
+				}
+				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1)
+					propQuery.operator(Operator.AND);
+				esQuery.must(propQuery);
+			}
+			return getUnique(new SearchQuery<>(query.getResultType(), esQuery,
+					DEFAULT_SIZE), false);
 		}
 		return super.getUnique(query, cache);
 	}
