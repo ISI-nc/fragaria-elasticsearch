@@ -9,8 +9,10 @@ import nc.isi.fragaria_adapter_rewrite.entities.EntityBuilder;
 import nc.isi.fragaria_adapter_rewrite.enums.Completion;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 public class ElastiSearchSessionImpl extends SessionImpl {
@@ -39,26 +41,7 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			return entities;
 		} else if (query instanceof ByViewQuery
 				&& ((ByViewQuery<T>) query).getFilter().size() > 0) {
-			BoolQueryBuilder esQuery = QueryBuilders.boolQuery();
-			for (String prop : ((ByViewQuery<T>) query).getFilter().keySet()) {
-				Object value = ((ByViewQuery<T>) query).getFilter().get(prop);
-				MatchQueryBuilder propQuery = null;
-				if (value != null) {
-					if (value instanceof Entity) {
-						propQuery = QueryBuilders.matchQuery(prop + "._id",
-								((Entity) value).getId());
-					} else if (value instanceof Enum) {
-						propQuery = QueryBuilders.matchQuery(prop,
-								((Enum) value).name());
-					} else
-						propQuery = QueryBuilders.matchQuery(prop, value);
-				} else {
-					propQuery = QueryBuilders.matchQuery(prop, value);
-				}
-				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1)
-					propQuery.operator(Operator.AND);
-				esQuery.must(propQuery);
-			}
+			BoolQueryBuilder esQuery = convertByViewQueryToEsQuery(query);
 			return get(new SearchQuery<>(query.getResultType(), esQuery,
 					DEFAULT_SIZE), false);
 		}
@@ -77,30 +60,42 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			return collection.size() == 0 ? null : collection.iterator().next();
 		} else if (query instanceof ByViewQuery
 				&& ((ByViewQuery<T>) query).getFilter().size() > 0) {
-			BoolQueryBuilder esQuery = QueryBuilders.boolQuery();
-			for (String prop : ((ByViewQuery<T>) query).getFilter().keySet()) {
-				Object value = ((ByViewQuery<T>) query).getFilter().get(prop);
-				MatchQueryBuilder propQuery = null;
-				if (value != null) {
-					if (value instanceof Entity) {
-						propQuery = QueryBuilders.matchQuery(prop + "._id",
-								((Entity) value).getId());
-					} else if (value instanceof Enum) {
-						propQuery = QueryBuilders.matchQuery(prop,
-								((Enum) value).name());
-					} else
-						propQuery = QueryBuilders.matchQuery(prop, value);
-				} else {
-					propQuery = QueryBuilders.matchQuery(prop, value);
-				}
-				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1)
-					propQuery.operator(Operator.AND);
-				esQuery.must(propQuery);
-			}
+			BoolQueryBuilder esQuery = convertByViewQueryToEsQuery(query);
 			return getUnique(new SearchQuery<>(query.getResultType(), esQuery,
 					DEFAULT_SIZE), false);
 		}
 		return super.getUnique(query, cache);
+	}
+
+	private <T extends Entity> BoolQueryBuilder convertByViewQueryToEsQuery(
+			Query<T> query) {
+		BoolQueryBuilder esQuery = QueryBuilders.boolQuery();
+		for (String propName : ((ByViewQuery<T>) query).getFilter().keySet()) {
+			Object value = ((ByViewQuery<T>) query).getFilter().get(propName);
+			QueryBuilder propQuery = null;
+			if (value != null) {
+				if (value != null) {
+					if (value instanceof Entity) {
+						propQuery = QueryBuilders.matchQuery(propName + "._id",
+								((Entity) value).getId());
+					} else if (value instanceof Enum) {
+						propQuery = QueryBuilders.matchQuery(propName,
+								((Enum) value).name());
+					} else
+						propQuery = QueryBuilders.matchQuery(propName, value);
+				} else {
+					propQuery = QueryBuilders.matchQuery(propName, value);
+				}
+				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1)
+					((MatchQueryBuilder) propQuery).operator(Operator.AND);
+			} else {
+				propQuery = QueryBuilders.filteredQuery(
+						QueryBuilders.matchAllQuery(),
+						FilterBuilders.existsFilter(propName));
+			}
+			esQuery.must(propQuery);
+		}
+		return esQuery;
 	}
 
 }
