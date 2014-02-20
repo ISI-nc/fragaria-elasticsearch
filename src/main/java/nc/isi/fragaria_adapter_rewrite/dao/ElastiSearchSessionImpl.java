@@ -1,11 +1,13 @@
 package nc.isi.fragaria_adapter_rewrite.dao;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import nc.isi.fragaria_adapter_rewrite.dao.adapters.AdapterManager;
 import nc.isi.fragaria_adapter_rewrite.dao.adapters.ElasticSearchAdapter;
 import nc.isi.fragaria_adapter_rewrite.entities.Entity;
 import nc.isi.fragaria_adapter_rewrite.entities.EntityBuilder;
+import nc.isi.fragaria_adapter_rewrite.entities.EntityMetadata;
 import nc.isi.fragaria_adapter_rewrite.enums.Completion;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -39,11 +41,15 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			}
 			changeSession(entities);
 			return entities;
-		} else if (query instanceof ByViewQuery
-				&& ((ByViewQuery<T>) query).getFilter().size() > 0) {
-			BoolQueryBuilder esQuery = convertByViewQueryToEsQuery(query);
-			return get(new SearchQuery<>(query.getResultType(), esQuery,
-					DEFAULT_SIZE), false);
+		} else if (query instanceof ByViewQuery) {
+			if (((ByViewQuery<T>) query).getFilter().size() > 0) {
+				BoolQueryBuilder esQuery = convertByViewQueryToEsQuery(query);
+				return get(new SearchQuery<>(query.getResultType(), esQuery,
+						DEFAULT_SIZE), false);
+			} else {
+				return get(new SearchQuery<>(query.getResultType(),
+						QueryBuilders.matchAllQuery(), DEFAULT_SIZE), false);
+			}
 		}
 		return super.get(query, cache);
 	}
@@ -74,7 +80,12 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			Object value = ((ByViewQuery<T>) query).getFilter().get(propName);
 			QueryBuilder propQuery = null;
 			if (value != null) {
-				if (value != null) {
+				EntityMetadata metadata = new EntityMetadata(
+						query.getResultType());
+				Class<?> propertyType = metadata.propertyType(propName);
+				Class<?> collType = metadata.getCollectionType(propName);
+				propName = metadata.getJsonPropertyName(propName);
+				if (propertyType.isAssignableFrom(value.getClass())) {
 					if (value instanceof Entity) {
 						propQuery = QueryBuilders.matchQuery(propName + "._id",
 								((Entity) value).getId());
@@ -84,10 +95,52 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 					} else
 						propQuery = QueryBuilders.matchQuery(propName, value);
 				} else {
-					propQuery = QueryBuilders.matchQuery(propName, value);
+					if (value instanceof Iterable) {
+						propQuery = QueryBuilders.boolQuery();
+						for (Iterator colItem = ((Iterable) value).iterator(); colItem
+								.hasNext();) {
+							MatchQueryBuilder colItemQuery = null;
+							Object valItem = colItem.next();
+							if (collType == null) {
+								if (Entity.class.isAssignableFrom(propertyType)) {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName + "._id", valItem);
+								} else {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName, valItem);
+								}
+								// if (colItem.hasNext()) {
+								// colItemQuery.operator(Operator.OR);
+								// }
+							} else {
+								if (Entity.class.isAssignableFrom(collType)) {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName + "._id", valItem);
+								} else {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName, valItem);
+								}
+								// if (colItem.hasNext()) {
+								// colItemQuery.operator(Operator.AND);
+								// }
+							}
+							((BoolQueryBuilder) propQuery).should(colItemQuery);
+						}
+					} else {
+						if (Entity.class.isAssignableFrom(propertyType)) {
+							propQuery = QueryBuilders.matchQuery(propName
+									+ "._id", value);
+						} else {
+							propQuery = QueryBuilders.matchQuery(propName,
+									value);
+						}
+					}
+
 				}
-				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1)
-					((MatchQueryBuilder) propQuery).operator(Operator.AND);
+				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1) {
+					if (propQuery instanceof MatchQueryBuilder)
+						((MatchQueryBuilder) propQuery).operator(Operator.AND);
+				}
 			} else {
 				propQuery = QueryBuilders.filteredQuery(
 						QueryBuilders.matchAllQuery(),
@@ -97,5 +150,4 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 		}
 		return esQuery;
 	}
-
 }
