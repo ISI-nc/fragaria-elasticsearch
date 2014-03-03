@@ -92,6 +92,9 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 					} else if (value instanceof Enum) {
 						propQuery = QueryBuilders.matchQuery(propName,
 								((Enum) value).name());
+					} else if (value instanceof Class) {
+						propQuery = QueryBuilders.matchQuery(propName,
+								((Class) value).getCanonicalName());
 					} else
 						propQuery = QueryBuilders.matchQuery(propName, value);
 				} else {
@@ -105,24 +108,36 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 								if (Entity.class.isAssignableFrom(propertyType)) {
 									colItemQuery = QueryBuilders.matchQuery(
 											propName + "._id", valItem);
+								} else if (valItem instanceof Enum) {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName, ((Enum) valItem).name());
+								} else if (valItem instanceof Class) {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName, ((Class) valItem)
+													.getCanonicalName());
 								} else {
 									colItemQuery = QueryBuilders.matchQuery(
 											propName, valItem);
 								}
-								// if (colItem.hasNext()) {
-								// colItemQuery.operator(Operator.OR);
-								// }
+								if (colItem.hasNext()) {
+									colItemQuery.operator(Operator.AND);
+								}
 							} else {
 								if (Entity.class.isAssignableFrom(collType)) {
 									colItemQuery = QueryBuilders.matchQuery(
 											propName + "._id", valItem);
+								} else if (valItem instanceof Enum) {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName, ((Enum) valItem).name());
+								} else if (valItem instanceof Class) {
+									colItemQuery = QueryBuilders.matchQuery(
+											propName, ((Class) valItem)
+													.getCanonicalName());
 								} else {
 									colItemQuery = QueryBuilders.matchQuery(
 											propName, valItem);
 								}
-								// if (colItem.hasNext()) {
-								// colItemQuery.operator(Operator.AND);
-								// }
+								colItemQuery.operator(Operator.AND);
 							}
 							((BoolQueryBuilder) propQuery).should(colItemQuery);
 						}
@@ -137,10 +152,8 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 					}
 
 				}
-				if (((ByViewQuery<T>) query).getFilter().keySet().size() > 1) {
-					if (propQuery instanceof MatchQueryBuilder)
-						((MatchQueryBuilder) propQuery).operator(Operator.AND);
-				}
+				if (propQuery instanceof MatchQueryBuilder)
+					((MatchQueryBuilder) propQuery).operator(Operator.AND);
 			} else {
 				propQuery = QueryBuilders.filteredQuery(
 						QueryBuilders.matchAllQuery(),
@@ -148,6 +161,7 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			}
 			esQuery.must(propQuery);
 		}
+		System.out.println(esQuery);
 		return esQuery;
 	}
 }
