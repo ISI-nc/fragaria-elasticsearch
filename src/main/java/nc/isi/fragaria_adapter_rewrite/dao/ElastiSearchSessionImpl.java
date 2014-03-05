@@ -161,7 +161,6 @@ public class ElastiSearchSessionImpl extends SessionImpl {
 			}
 			esQuery.must(propQuery);
 		}
-		System.out.println(esQuery);
 		return esQuery;
 	}
 }
